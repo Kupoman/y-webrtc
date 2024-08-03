@@ -2,6 +2,8 @@
 
 import { WebSocketServer } from 'ws'
 import http from 'http'
+import https from 'https'
+import fs from 'fs'
 import * as map from 'lib0/map'
 
 const wsReadyStateConnecting = 0
@@ -14,7 +16,21 @@ const pingTimeout = 30000
 const port = process.env.PORT || 4444
 const wss = new WebSocketServer({ noServer: true })
 
-const server = http.createServer((request, response) => {
+const createServer = (cb) => {
+  const keyPath = process.env.KEY
+  const certPath = process.env.CERT
+  let options = null
+  if (keyPath && certPath) {
+    console.log('Using HTTPS')
+    options = {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath)
+    }
+  }
+  return (options) ? https.createServer(options, cb) : http.createServer(cb)
+}
+
+const server = createServer((request, response) => {
   response.writeHead(200, { 'Content-Type': 'text/plain' })
   response.end('okay')
 })
